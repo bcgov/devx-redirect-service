@@ -45,6 +45,8 @@ jobs:
 
       - name: Run container
         run: |
+          echo "docker images:"
+          docker image ls
           docker run --rm -d -p 2015:2015 -p 2016:2016 --name redirect-container ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
       
       - name: Wait for healthy container
