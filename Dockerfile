@@ -1,4 +1,4 @@
-FROM caddy:2.10.0-alpine@sha256:e2e3a089760c453bc51c4e718342bd7032d6714f15b437db7121bfc2de2654a6
+FROM caddy:2.10.0-alpine@sha256:55ce1e7720af63164b96a8181cbf11dd64ea1bf1639852c5b5213344a5b204ae
 
 # Needed to use Caddy's logging format transform
 RUN caddy add-package github.com/caddyserver/transform-encoder   
@@ -13,11 +13,11 @@ RUN mkdir -p /data/caddy && \
 WORKDIR /srv
 
 COPY Caddyfile /etc/caddy/Caddyfile
-RUN caddy fmt /etc/caddy/Caddyfile
+RUN caddy fmt --overwrite /etc/caddy/Caddyfile
 
 COPY error.html /srv/error.html
 
-EXPOSE 2015 2016
+EXPOSE 2015 2016 2017
 
 USER 1001
 

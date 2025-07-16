@@ -3,8 +3,7 @@
 	admin off
 }
 
-# Where caddy should listen
-:2015 {
+(common_config) {
 	# Turn on the Web/file server
 	file_server
 
@@ -27,7 +26,11 @@
 		rewrite * /error.html
 		file_server
 	}
+}
 
+# Platform Developer Docs Redirects
+:2015 {
+	import common_config
 	redir / https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/ permanent
 	redir /sysdig-monitor-onboarding/ https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/docs/app-monitoring/sysdig-monitor-onboarding/ permanent
 	redir /sysdig-monitor-setup-team/ https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/docs/app-monitoring/sysdig-monitor-setup-team/ permanent
@@ -105,6 +108,59 @@
 	redir /devops-security-considerations/ https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/ permanent
 }
 
+# SO Redirects
+:2017 {
+	import common_config
+	redir / https://github.com/bcgov/gh-discussions-lab/discussions permanent
+	redir /questions/526 https://github.com/bcgov/gh-discussions-lab/discussions/776 permanent
+	redir /q/526 https://github.com/bcgov/gh-discussions-lab/discussions/776 permanent
+	redir /questions/526/527#527 https://github.com/bcgov/gh-discussions-lab/discussions/776#discussioncomment-13781370 permanent
+	redir /a/527 https://github.com/bcgov/gh-discussions-lab/discussions/776#discussioncomment-13781370 permanent
+	redir /questions/526/830#830 https://github.com/bcgov/gh-discussions-lab/discussions/776#discussioncomment-13781371 permanent
+	redir /a/830 https://github.com/bcgov/gh-discussions-lab/discussions/776#discussioncomment-13781371 permanent
+	redir /questions/526/1349#1349 https://github.com/bcgov/gh-discussions-lab/discussions/776#discussioncomment-13781372 permanent
+	redir /a/1349 https://github.com/bcgov/gh-discussions-lab/discussions/776#discussioncomment-13781372 permanent
+	redir /questions/1082 https://github.com/bcgov/gh-discussions-lab/discussions/777 permanent
+	redir /q/1082 https://github.com/bcgov/gh-discussions-lab/discussions/777 permanent
+	redir /questions/1082/1180#1180 https://github.com/bcgov/gh-discussions-lab/discussions/777#discussioncomment-13781374 permanent
+	redir /a/1180 https://github.com/bcgov/gh-discussions-lab/discussions/777#discussioncomment-13781374 permanent
+	redir /questions/1113 https://github.com/bcgov/gh-discussions-lab/discussions/778 permanent
+	redir /q/1113 https://github.com/bcgov/gh-discussions-lab/discussions/778 permanent
+	redir /questions/1113/1338#1338 https://github.com/bcgov/gh-discussions-lab/discussions/778#discussioncomment-13781380 permanent
+	redir /a/1338 https://github.com/bcgov/gh-discussions-lab/discussions/778#discussioncomment-13781380 permanent
+	redir /questions/1282 https://github.com/bcgov/gh-discussions-lab/discussions/779 permanent
+	redir /q/1282 https://github.com/bcgov/gh-discussions-lab/discussions/779 permanent
+	redir /questions/1282/1283#1283 https://github.com/bcgov/gh-discussions-lab/discussions/779#discussioncomment-13781383 permanent
+	redir /a/1283 https://github.com/bcgov/gh-discussions-lab/discussions/779#discussioncomment-13781383 permanent
+	redir /questions/1282/1344#1344 https://github.com/bcgov/gh-discussions-lab/discussions/779#discussioncomment-13781385 permanent
+	redir /a/1344 https://github.com/bcgov/gh-discussions-lab/discussions/779#discussioncomment-13781385 permanent
+	redir /questions/1320 https://github.com/bcgov/gh-discussions-lab/discussions/780 permanent
+	redir /q/1320 https://github.com/bcgov/gh-discussions-lab/discussions/780 permanent
+	redir /questions/1320/1321#1321 https://github.com/bcgov/gh-discussions-lab/discussions/780#discussioncomment-13781386 permanent
+	redir /a/1321 https://github.com/bcgov/gh-discussions-lab/discussions/780#discussioncomment-13781386 permanent
+	redir /questions/1326 https://github.com/bcgov/gh-discussions-lab/discussions/781 permanent
+	redir /q/1326 https://github.com/bcgov/gh-discussions-lab/discussions/781 permanent
+	redir /questions/1326/1327#1327 https://github.com/bcgov/gh-discussions-lab/discussions/781#discussioncomment-13781390 permanent
+	redir /a/1327 https://github.com/bcgov/gh-discussions-lab/discussions/781#discussioncomment-13781390 permanent
+	redir /questions/1345 https://github.com/bcgov/gh-discussions-lab/discussions/782 permanent
+	redir /q/1345 https://github.com/bcgov/gh-discussions-lab/discussions/782 permanent
+	redir /questions/1345/1346#1346 https://github.com/bcgov/gh-discussions-lab/discussions/782#discussioncomment-13781391 permanent
+	redir /a/1346 https://github.com/bcgov/gh-discussions-lab/discussions/782#discussioncomment-13781391 permanent
+	redir /questions/1347 https://github.com/bcgov/gh-discussions-lab/discussions/783 permanent
+	redir /q/1347 https://github.com/bcgov/gh-discussions-lab/discussions/783 permanent
+	redir /questions/1347/1348#1348 https://github.com/bcgov/gh-discussions-lab/discussions/783#discussioncomment-13781394 permanent
+	redir /a/1348 https://github.com/bcgov/gh-discussions-lab/discussions/783#discussioncomment-13781394 permanent
+	redir /questions/1350 https://github.com/bcgov/gh-discussions-lab/discussions/784 permanent
+	redir /q/1350 https://github.com/bcgov/gh-discussions-lab/discussions/784 permanent
+	redir /questions/1350/1351#1351 https://github.com/bcgov/gh-discussions-lab/discussions/784#discussioncomment-13781395 permanent
+	redir /a/1351 https://github.com/bcgov/gh-discussions-lab/discussions/784#discussioncomment-13781395 permanent
+	redir /questions/1354 https://github.com/bcgov/gh-discussions-lab/discussions/785 permanent
+	redir /q/1354 https://github.com/bcgov/gh-discussions-lab/discussions/785 permanent
+	redir /questions/1354/1355#1355 https://github.com/bcgov/gh-discussions-lab/discussions/785#discussioncomment-13781397 permanent
+	redir /a/1355 https://github.com/bcgov/gh-discussions-lab/discussions/785#discussioncomment-13781397 permanent
+}
+
+# Health check endpoint
 :2016 {
 	handle /health {
 		respond "OK"

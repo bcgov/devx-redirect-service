@@ -18,13 +18,13 @@ You can run it locally using Docker or Podman.
 ```bash
 # Podman build and run commands
 podman build -t platform-docs-redirect-test .
-podman run --rm -p 2015:2015 -p 2016:2016 platform-docs-redirect-test
+podman run --rm -p 2015:2015 -p 2016:2016 -p 2017:2017 platform-docs-redirect-test
 ```
 
 ```bash
 # Docker build and run commands
 docker build -t platform-docs-redirect-test .
-docker run --rm -p 2015:2015 -p 2016:2016 platform-docs-redirect-test
+docker run --rm -p 2015:2015 -p 2016:2016 -p 2017:2017 platform-docs-redirect-test
 ```
 
 ```bash
