@@ -95,7 +95,6 @@ jobs:
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results.sarif'
 
-      # To review results for a PR in the GitHub Security tab, filter for "pr:NUM tool:Trivy is:open"
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
