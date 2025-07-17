@@ -43,10 +43,6 @@ jobs:
           load: true
           tags: ${{ github.ref_name}}
 
-      - name: Debug
-        run: |
-          docker image ls
-
       - name: Run container
         run: |
           docker run --rm -d -p 2015:2015 -p 2016:2016 --name redirect-container ${{ github.ref_name }}
@@ -93,10 +89,9 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.32.0
         with:
-          image-ref: '${{ github.ref_name}}'
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}'
           severity: 'CRITICAL,HIGH'
-          format: 'template'
-          template: '@/contrib/sarif.tpl'
+          format: 'sarif'
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy scan results to GitHub Security tab
