@@ -1,0 +1,39 @@
+name: build
+on:
+  schedule:
+    - cron: '0 0 * * 1' 
+  workflow_dispatch:
+jobs:
+  build:
+    env: 
+      TAG_NAME: scheduled-build
+    name: Build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build 
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ${{ env.TAG_NAME }}
+
+      - name: Debug
+        run: |
+          docker images ls
+
+
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@0.28.0
+      #   with:
+      #     image-ref: 'docker.io/my-organization/my-app:${{ github.sha }}'
+      #     format: 'sarif'
+      #     output: 'trivy-results.sarif'
+
+      # - name: Upload Trivy scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   if: always()
+      #   with:
+      #     sarif_file: 'trivy-results.sarif'
