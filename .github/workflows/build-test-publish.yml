@@ -43,6 +43,10 @@ jobs:
           load: true
           tags: ${{ github.ref_name}}
 
+      - name: Debug
+        run: |
+          docker images ls
+
       - name: Run container
         run: |
           docker run --rm -d -p 2015:2015 -p 2016:2016 --name redirect-container ${{ github.ref_name }}
