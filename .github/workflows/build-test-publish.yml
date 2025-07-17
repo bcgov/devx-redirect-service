@@ -45,7 +45,7 @@ jobs:
 
       - name: Debug
         run: |
-          docker images ls
+          docker image ls
 
       - name: Run container
         run: |
