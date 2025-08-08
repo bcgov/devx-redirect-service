@@ -2,7 +2,7 @@
 
 This project redirects legacy URLs managed by the Developer Experience Team. 
 
-The [Caddyfile](./Caddyfile) contains the list of redirected URLS.
+The [Caddyfile](./Caddyfile) contains the list of redirected URLs.
 
 ## About
 
