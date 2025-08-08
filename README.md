@@ -1,6 +1,8 @@
-# platform-developer-docs-redirect
+# devx-redirect-service
 
-This project is a redirect service using Caddy to redirect legacy URLs to the new [platform-developer-docs](https://github.com/bcgov/platform-developer-docs) location.
+This project redirects legacy URLs managed by the Developer Experience Team. 
+
+The [Caddyfile](./Caddyfile) contains the list of redirected URLS.
 
 ## About
 
@@ -17,14 +19,14 @@ You can run it locally using Docker or Podman.
 
 ```bash
 # Podman build and run commands
-podman build -t platform-docs-redirect-test .
-podman run --rm -p 2015:2015 -p 2016:2016 platform-docs-redirect-test
+podman build -t devx-redirect-service .
+podman run --rm -p 2015:2015 -p 2016:2016 devx-redirect-service
 ```
 
 ```bash
 # Docker build and run commands
-docker build -t platform-docs-redirect-test .
-docker run --rm -p 2015:2015 -p 2016:2016 platform-docs-redirect-test
+docker build -t devx-redirect-service .
+docker run --rm -p 2015:2015 -p 2016:2016 devx-redirect-service
 ```
 
 ```bash
