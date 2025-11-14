@@ -1,4 +1,4 @@
-FROM caddy:2.10.0-alpine@sha256:55ce1e7720af63164b96a8181cbf11dd64ea1bf1639852c5b5213344a5b204ae
+FROM caddy:2.10-alpine@sha256:953131cfea8e12bfe1c631a36308e9660e4389f0c3dfb3be957044d3ac92d446
 
 # Needed to use Caddy's logging format transform
 RUN caddy add-package github.com/caddyserver/transform-encoder   

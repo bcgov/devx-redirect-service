@@ -45,7 +45,7 @@ jobs:
       
       - name: Run container
         run: |
-          docker run --rm -d -p 2015:2015 -p 2016:2016 --name redirect-container ${{ github.ref_name }}
+          docker run --rm -d -p 2015:2015 -p 2016:2016 -p 2017:2017 --name redirect-container ${{ github.ref_name }}
       
       - name: Wait for healthy container
         run: |
@@ -62,7 +62,7 @@ jobs:
       - name: Run tests
         run: |
           chmod +x ./scripts/test-redirects.sh
-          ./scripts/test-redirects.sh localhost 2015
+          ./scripts/test-redirects.sh localhost 2015 2017
       
       - name: Stop container
         if: always()
