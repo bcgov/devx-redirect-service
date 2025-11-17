@@ -6,36 +6,46 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  
+  build-test-publish:
     name: Build and Test
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      security-events: write
+      packages: write
     env:
       MAX_ATTEMPTS: 5
       SLEEP_DURATION: 30
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
-      - name: Build Docker image
-        run: docker buildx build --load -t devx-redirect-service-test .
 
-      - name: Save Docker image as tar
-        run: docker save devx-redirect-service-test -o /tmp/redirect-image.tar
-
-      - name: Upload image artifact
-        uses: actions/upload-artifact@v4
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          name: redirect-image
-          path: /tmp/redirect-image.tar
-          retention-days: 1
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: latest=true
+          tags: |
+            type=sha,format=short   
+            type=raw,value=${{ github.ref_name }}
+      
+      - name: Build and export to Docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ${{ github.ref_name}}
       
       - name: Run container
         run: |
-          docker run -d -p 2015:2015 -p 2016:2016 --name redirect-container devx-redirect-service-test
+          docker run --rm -d -p 2015:2015 -p 2016:2016 -p 2017:2017 --name redirect-container ${{ github.ref_name }}
       
       - name: Wait for healthy container
         run: |
@@ -52,33 +62,12 @@ jobs:
       - name: Run tests
         run: |
           chmod +x ./scripts/test-redirects.sh
-          ./scripts/test-redirects.sh localhost 2015
+          ./scripts/test-redirects.sh localhost 2015 2017
       
       - name: Stop container
         if: always()
         run: docker stop redirect-container
 
-  publish:
-    name: Publish to GitHub Container Registry
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    env:
-      REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository }}
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Download image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: redirect-image
-          path: /tmp
-
-      - name: Load Docker image
-        run: docker load -i /tmp/redirect-image.tar
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -87,14 +76,6 @@ jobs:
           username: ${{ github.actor}}
           password: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          flavor: latest=true
-          tags: |
-            type=sha,format=short
       
       - name: Build and push to GitHub Container Registry
         uses: docker/build-push-action@v6.17.0
@@ -102,8 +83,19 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          load: true
-          file: Dockerfile
           build-args: |
             BUILDKIT_INLINE_CACHE=1
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}'
+          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

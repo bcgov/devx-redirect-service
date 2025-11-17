@@ -20,13 +20,13 @@ You can run it locally using Docker or Podman.
 ```bash
 # Podman build and run commands
 podman build -t devx-redirect-service .
-podman run --rm -p 2015:2015 -p 2016:2016 devx-redirect-service
+podman run --rm -p 2015:2015 -p 2016:2016 -p 2017:2017 devx-redirect-service
 ```
 
 ```bash
 # Docker build and run commands
 docker build -t devx-redirect-service .
-docker run --rm -p 2015:2015 -p 2016:2016 devx-redirect-service
+docker run --rm -p 2015:2015 -p 2016:2016 -p 2017:2017 devx-redirect-service
 ```
 
 ```bash
