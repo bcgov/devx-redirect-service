@@ -15,7 +15,7 @@ WORKDIR /srv
 COPY Caddyfile /etc/caddy/Caddyfile
 RUN caddy fmt --overwrite /etc/caddy/Caddyfile
 
-COPY error.html /srv/error.html
+COPY error.html error_so.html /srv/
 
 EXPOSE 2015 2016 2017
 
