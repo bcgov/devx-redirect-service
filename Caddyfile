@@ -22,10 +22,6 @@
 		level info
 	}
 
-	handle_errors {
-		rewrite * /error.html
-		file_server
-	}
 }
 
 # Platform Developer Docs Redirects
@@ -106,6 +102,11 @@
 	redir /kyverno/ https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/docs/platform-automation/kyverno/ permanent
 	redir /pruning/ https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/docs/platform-automation/pruning/ permanent
 	redir /devops-security-considerations/ https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/ permanent
+
+	handle_errors {
+		rewrite * /error.html
+		file_server
+	}
 }
 
 # SO Redirects
@@ -1738,6 +1739,10 @@
 	redir /questions/1117/1118 https://github.com/bcgov/bcgov-community-discussions/discussions/360#discussioncomment-14949943 permanent
 	redir /a/1118 https://github.com/bcgov/bcgov-community-discussions/discussions/360#discussioncomment-14949943 permanent
 
+	handle_errors {
+		rewrite * /error_so.html
+		file_server
+	}
 }
 
 # Health check endpoint
