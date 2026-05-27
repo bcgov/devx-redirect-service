@@ -7,6 +7,7 @@ set -euo pipefail
 HOST=${1:-localhost}
 PORT1=${2:-2015}
 PORT2=${3:-2017}
+PORT3=${4:-2018}
 
 paths_port1=(
   "/"
@@ -38,11 +39,22 @@ expected_destinations_port2=(
   "https://github.com/bcgov/bcgov-community-discussions/discussions/21#discussioncomment-14942197"
 )
 
+paths_port3=(
+  "/"
+  "/some/path?test=1"
+)
+
+expected_destinations_port3=(
+  "https://bcgov.sharepoint.com/teams/Developercommunity"
+  "https://bcgov.sharepoint.com/teams/Developercommunity"
+)
+
 
 run_tests() {
   local paths_array_name="$1"
   local expected_array_name="$2"
   local port="$3"
+  local test_404="${4:-true}"
 
   local length
   eval "length=\${#${paths_array_name}[@]}"
@@ -66,16 +78,18 @@ run_tests() {
     fi
   done
 
-  # 404 test
-  echo "🔎 Testing error handling (/non-existent-path/)"
-  response=$(curl -s -o /dev/null -w "%{http_code}\n" "http://$HOST:$port/non-existent-path/")
-  status="$response"
+  if [[ "$test_404" == "true" ]]; then
+    # 404 test
+    echo "🔎 Testing error handling (/non-existent-path/)"
+    response=$(curl -s -o /dev/null -w "%{http_code}\n" "http://$HOST:$port/non-existent-path/")
+    status="$response"
 
-  if [[ "$status" == "404" ]]; then
-    echo "   ✅ 404 handling OK"
-  else
-    echo "   ❌ Expected 404 but got $status"
-    exit 1
+    if [[ "$status" == "404" ]]; then
+      echo "   ✅ 404 handling OK"
+    else
+      echo "   ❌ Expected 404 but got $status"
+      exit 1
+    fi
   fi
 }
 
@@ -85,5 +99,8 @@ run_tests paths_port1 expected_destinations_port1 "$PORT1"
 
 echo "🧪 Testing redirects on $HOST:$PORT2"
 run_tests paths_port2 expected_destinations_port2 "$PORT2"
+
+echo "🧪 Testing redirects on $HOST:$PORT3"
+run_tests paths_port3 expected_destinations_port3 "$PORT3" false
 
 echo "🎉 All tests passed successfully!"

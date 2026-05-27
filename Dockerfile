@@ -17,7 +17,7 @@ RUN caddy fmt --overwrite /etc/caddy/Caddyfile
 
 COPY error.html error_so.html /srv/
 
-EXPOSE 2015 2016 2017
+EXPOSE 2015 2016 2017 2018
 
 USER 1001
 
