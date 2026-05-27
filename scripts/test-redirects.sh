@@ -45,8 +45,8 @@ paths_port3=(
 )
 
 expected_destinations_port3=(
-  "https://bcgov.sharepoint.com/teams/Developercommunity"
-  "https://bcgov.sharepoint.com/teams/Developercommunity"
+  "https://bcgov.sharepoint.com/teams/developercommunity"
+  "https://bcgov.sharepoint.com/teams/developercommunity"
 )
 
 
