@@ -1745,6 +1745,12 @@
 	}
 }
 
+# Rocket.Chat Redirect
+:2018 {
+	import common_config
+	redir * https://bcgov.sharepoint.com/teams/developercommunity permanent
+}
+
 # Health check endpoint
 :2016 {
 	handle /health {
