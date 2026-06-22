@@ -12,8 +12,10 @@ from typing import Dict, List, Any
 
 import yaml
 import requests
+from urllib.parse import urlparse
 
 local_host = "localhost"
+allowed_hosts = {local_host}  # Always allow localhost
 
 
 def load_test_cases(yaml_file: str) -> List[Dict[str, Any]]:
@@ -45,6 +47,9 @@ def test_redirect(protocol: str, host: str, port: int | None, path: str, expecte
     Returns True if the redirect matches expected URL, False otherwise.
     """
     url = build_url(protocol, host, port, path)
+
+    if not check_host_allowed(url):
+        return False
     
     print(f"🔎 Testing {path}")
     print(f"   ↳ Expect: {expected_url}")
@@ -69,6 +74,9 @@ def test_redirect(protocol: str, host: str, port: int | None, path: str, expecte
 def test_404_error(protocol: str, host: str, port: int | None) -> bool:
     """Test that non-existent path returns 404."""
     url = build_url(protocol, host, port, '/non-existent-path/')
+
+    if not check_host_allowed(url):
+        return False
     
     print("🔎 Testing error handling (/non-existent-path/)")
     
@@ -87,6 +95,16 @@ def test_404_error(protocol: str, host: str, port: int | None) -> bool:
         print(f"   ❌ ERROR: {e}")
         return False
 
+def check_host_allowed(url: str) -> bool:
+    """Validate that a hostname is in the allowed hosts list.
+    
+    Fixes issue: https://sonarcloud.io/organizations/bcgov-sonarcloud/rules?open=pythonsecurity%3AS8703&rule_key=pythonsecurity%3AS8703
+    """
+    if urlparse(url).hostname not in allowed_hosts:
+        print(f"❌ Host '{urlparse(url).hostname}' is not allowed.")
+        return False
+    else:
+        return True
 
 def run_tests(
     protocol: str,
@@ -156,25 +174,6 @@ def get_test_configs_for_host(test_configs, host, port_override=None):
                 if cfg.get(filter_key) == filter_value
             ]
     return configs_to_test
-
-def validate_args_allowed(args, configs):
-    # Validate that the host is allowed based on test configurations
-    # Fixes issue: https://sonarcloud.io/organizations/bcgov-sonarcloud/rules?open=pythonsecurity%3AS8703&rule_key=pythonsecurity%3AS8703
-    allowed_hosts = {cfg.get('hostname') for cfg in configs if 'hostname' in cfg}
-    allowed_hosts.add(local_host)  # Always allow localhost
-
-    if args.host not in allowed_hosts:
-        print(f"❌ Host '{args.host}' is not allowed.")
-        sys.exit(1)
-
-    allowed_ports = {cfg.get('port') for cfg in configs if 'port' in cfg}
-    if args.host == local_host and args.port is not None and args.port not in allowed_ports:
-        print(f"❌ Port '{args.port}' is not allowed.")
-        sys.exit(1)
-
-    if args.host != local_host and args.port is not None:
-        print(f"❌ Port override is not allowed for host '{args.host}'.")
-        sys.exit(1)
     
 def main():
     """Main entry point."""
@@ -207,6 +206,10 @@ Examples:
     
     
     args = parser.parse_args()
+
+    if args.host != local_host and args.port is not None:
+        print(f"❌ Port override is not allowed for host '{args.host}'.")
+        sys.exit(1)
     
     protocol = 'http' if args.host == local_host else 'https'
     
@@ -216,7 +219,10 @@ Examples:
     # Load test cases
     test_configs = load_test_cases(str(yaml_file))
 
-    validate_args_allowed(args, test_configs)
+    allowed_hosts.update(
+        str(cfg['hostname']) for cfg in test_configs if isinstance(cfg.get('hostname'), str)
+    )
+
 
     configs_to_test = get_test_configs_for_host(test_configs, args.host, args.port)
 
