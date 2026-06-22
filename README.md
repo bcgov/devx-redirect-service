@@ -44,8 +44,8 @@ python3 test-redirects.py
 # Run tests for specific port on localhost
 python3 test-redirects.py --port 2015
 
-# Run tests for specific domain
-python3 test-redirects.py --host docs.developer.gov.bc.ca # port is ignored if included
+# Run tests for specific domain (port is not applicable for domain test)
+python3 test-redirects.py --host docs.developer.gov.bc.ca 
 ```
 
 ```bash

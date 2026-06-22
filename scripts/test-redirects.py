@@ -142,7 +142,8 @@ def run_tests(
     return all_passed
 
 def get_test_configs_for_host(test_configs, host, port_override=None):
-    # Filter configurations based on host and port
+    # Filter configurations based on host and port. 
+    # Allows testing of specific ports for localhost, and specific hostnames for production.
     configs_to_test = []
     if host == local_host and port_override is None:
         configs_to_test = test_configs
@@ -155,14 +156,26 @@ def get_test_configs_for_host(test_configs, host, port_override=None):
                 if cfg.get(filter_key) == filter_value
             ]
     return configs_to_test
-    
-def check_config(configs_to_test, host, port_override=None):
-    if not configs_to_test:
-        port_info = f":{port_override}" if host == local_host and port_override else ""
-        print(f"❌ No test configuration found for {host}{port_info}")
+
+def validate_args_allowed(args, configs):
+    # Validate that the host is allowed based on test configurations
+    # Fixes issue: https://sonarcloud.io/organizations/bcgov-sonarcloud/rules?open=pythonsecurity%3AS8703&rule_key=pythonsecurity%3AS8703
+    allowed_hosts = {cfg.get('hostname') for cfg in configs if 'hostname' in cfg}
+    allowed_hosts.add(local_host)  # Always allow localhost
+
+    if args.host not in allowed_hosts:
+        print(f"❌ Host '{args.host}' is not allowed.")
+        sys.exit(1)
+
+    allowed_ports = {cfg.get('port') for cfg in configs if 'port' in cfg}
+    if args.host == local_host and args.port is not None and args.port not in allowed_ports:
+        print(f"❌ Port '{args.port}' is not allowed.")
+        sys.exit(1)
+
+    if args.host != local_host and args.port is not None:
+        print(f"❌ Port override is not allowed for host '{args.host}'.")
         sys.exit(1)
     
-
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -202,13 +215,17 @@ Examples:
     
     # Load test cases
     test_configs = load_test_cases(str(yaml_file))
-    
-    print(f"Configuration: {protocol}://{args.host}" + (f":{args.port}" if args.port else ""))
-    print()
+
+    validate_args_allowed(args, test_configs)
 
     configs_to_test = get_test_configs_for_host(test_configs, args.host, args.port)
 
-    check_config(configs_to_test,args.host, args.port)
+    if not configs_to_test:
+        print(f"❌ No test configurations found for host '{args.host}'" + (f" and port '{args.port}'" if args.port else ""))
+        sys.exit(1)
+
+    print(f"Configuration: {protocol}://{args.host}" + (f":{args.port}" if args.port else ""))
+    print()
     
     # Run tests
     if run_tests(protocol, args.host, configs_to_test, port_override=args.port):
