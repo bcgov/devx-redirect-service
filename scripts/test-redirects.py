@@ -47,23 +47,23 @@ def test_redirect(protocol: str, host: str, port: int | None, path: str, expecte
     Returns True if the redirect matches expected URL, False otherwise.
     """
     url = build_url(protocol, host, port, path)
-
-    if not check_host_allowed(url):
-        return False
     
     print(f"🔎 Testing {path}")
     print(f"   ↳ Expect: {expected_url}")
     
     try:
-        response = requests.head(url, allow_redirects=False, timeout=5)
-        status = response.status_code
-        location = response.headers.get('Location', '')
-        
-        if status == 301 and location == expected_url:
-            print("   ✅ OK")
-            return True
+        if check_host_allowed(url):
+            response = requests.head(url, allow_redirects=False, timeout=5)
+            status = response.status_code
+            location = response.headers.get('Location', '')
+            
+            if status == 301 and location == expected_url:
+                print("   ✅ OK")
+                return True
+            else:
+                print(f"   ❌ FAIL: Status={status}, Location={location}")
+                return False
         else:
-            print(f"   ❌ FAIL: Status={status}, Location={location}")
             return False
     
     except requests.RequestException as e:
@@ -74,21 +74,21 @@ def test_redirect(protocol: str, host: str, port: int | None, path: str, expecte
 def test_404_error(protocol: str, host: str, port: int | None) -> bool:
     """Test that non-existent path returns 404."""
     url = build_url(protocol, host, port, '/non-existent-path/')
-
-    if not check_host_allowed(url):
-        return False
     
     print("🔎 Testing error handling (/non-existent-path/)")
     
     try:
-        response = requests.head(url, allow_redirects=False, timeout=5)
-        status = response.status_code
-        
-        if status == 404:
-            print("   ✅ 404 handling OK")
-            return True
+        if check_host_allowed(url):
+            response = requests.head(url, allow_redirects=False, timeout=5)
+            status = response.status_code
+            
+            if status == 404:
+                print("   ✅ 404 handling OK")
+                return True
+            else:
+                print(f"   ❌ Expected 404 but got {status}")
+                return False
         else:
-            print(f"   ❌ Expected 404 but got {status}")
             return False
     
     except requests.RequestException as e:
