@@ -50,7 +50,7 @@ def test_redirect(protocol: str, host: str, port: int | None, path: str, expecte
     print(f"   ↳ Expect: {expected_url}")
     
     try:
-        response = requests.head(url, allow_redirects=False, timeout=5, verify=False)
+        response = requests.head(url, allow_redirects=False, timeout=5)
         status = response.status_code
         location = response.headers.get('Location', '')
         
@@ -73,7 +73,7 @@ def test_404_error(protocol: str, host: str, port: int | None) -> bool:
     print("🔎 Testing error handling (/non-existent-path/)")
     
     try:
-        response = requests.head(url, allow_redirects=False, timeout=5, verify=False)
+        response = requests.head(url, allow_redirects=False, timeout=5)
         status = response.status_code
         
         if status == 404:
