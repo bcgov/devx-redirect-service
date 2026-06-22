@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 
 local_host = "localhost"
 allowed_hosts = {local_host}  # Always allow localhost
+allowed_ports = {None}
 
 
 def load_test_cases(yaml_file: str) -> List[Dict[str, Any]]:
@@ -100,8 +101,8 @@ def check_host_allowed(url: str) -> bool:
     
     Fixes issue: https://sonarcloud.io/organizations/bcgov-sonarcloud/rules?open=pythonsecurity%3AS8703&rule_key=pythonsecurity%3AS8703
     """
-    if urlparse(url).hostname not in allowed_hosts:
-        print(f"❌ Host '{urlparse(url).hostname}' is not allowed.")
+    if urlparse(url).hostname not in allowed_hosts or urlparse(url).port not in allowed_ports:
+        print(f"❌ Host '{urlparse(url).hostname}' or port '{urlparse(url).port}' is not allowed.")
         return False
     else:
         return True
@@ -221,6 +222,9 @@ Examples:
 
     allowed_hosts.update(
         str(cfg['hostname']) for cfg in test_configs if isinstance(cfg.get('hostname'), str)
+    )
+    allowed_ports.update(
+        int(cfg['port']) for cfg in test_configs if isinstance(cfg.get('port'), int)
     )
 
 
