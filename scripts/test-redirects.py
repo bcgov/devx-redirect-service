@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 local_host = "localhost"
 allowed_hosts = {local_host}  # Always allow localhost
-allowed_ports = {None}
+allowed_ports = set() 
 
 
 def load_test_cases(yaml_file: str) -> List[Dict[str, Any]]:
@@ -226,6 +226,7 @@ Examples:
     allowed_ports.update(
         int(cfg['port']) for cfg in test_configs if isinstance(cfg.get('port'), int)
     )
+    allowed_ports.add(None)  # Allow URLs without explicit ports
 
 
     configs_to_test = get_test_configs_for_host(test_configs, args.host, args.port)
