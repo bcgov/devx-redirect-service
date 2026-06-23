@@ -13,7 +13,7 @@ from typing import Dict, List, Any
 import yaml
 import requests
 
-local_host = "localhost"
+local_host = "http://localhost"
 
 def load_test_cases(yaml_file: str) -> List[Dict[str, Any]]:
     """Load test cases from YAML file."""
@@ -33,7 +33,7 @@ def load_test_cases(yaml_file: str) -> List[Dict[str, Any]]:
 
 def build_url(port: int | None, path: str) -> str:
     """Build a URL from port and path."""
-    return f"http://{local_host}:{port}{path}"
+    return f"{local_host}:{port}{path}"
 
 
 def test_redirect(port: int | None, path: str, expected_url: str) -> bool:
