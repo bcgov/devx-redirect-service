@@ -20,7 +20,7 @@ test_url() {
     if [[ "$status" == "301" && "$location" == "$expected_url" ]]; then
         echo "   ✅ OK - $location"
     else
-        echo "   ❌ FAIL - $location (Status=$status)"
+        echo "   ❌ FAIL - $location (Status=$status)" >&2
         exit 1
     fi
 }
@@ -33,7 +33,7 @@ check_error_response() {
     if [[ "$status" == "404" ]]; then
       echo "   ✅ 404 handling OK"
     else
-      echo "   ❌ Expected 404 but got $status"
+      echo "   ❌ Expected 404 but got $status" >&2
       exit 1
     fi
 }
@@ -44,7 +44,7 @@ test_url "$DOCS_URL/sysdig-monitor-onboarding/" "https://developer.gov.bc.ca/doc
 test_url "$DOCS_URL/rocketchat-etiquette/" "https://developer.gov.bc.ca/docs/default/component/bc-developer-guide/rocketchat/rocketchat-etiquette/"
 test_url "$DOCS_URL/platform-security-tools/" "https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/docs/security-and-privacy-compliance/platform-security-tools/"
 
-echo "Testing $DOCS_URL error handling"
+echo "Testing $DOCS_URL 404 handling"
 check_error_response $DOCS_URL
 
 echo "Testing $SO_URL redirects"
@@ -54,7 +54,7 @@ test_url "$SO_URL/questions/94/117" "https://github.com/bcgov/bcgov-community-di
 test_url "$SO_URL/q/100" "https://github.com/bcgov/bcgov-community-discussions/discussions/18"
 test_url "$SO_URL/a/121" "https://github.com/bcgov/bcgov-community-discussions/discussions/21#discussioncomment-14942197"
 
-echo "Testing $SO_URL error handling"
+echo "Testing $SO_URL 404 handling"
 check_error_response $SO_URL
 
 echo "Testing $RC_URL redirects"
