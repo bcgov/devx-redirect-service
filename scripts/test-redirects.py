@@ -168,9 +168,8 @@ def run_tests(
                 all_passed = False
         
         # Test 404 if enabled
-        if test_404:
-            if not test_404_error(protocol, host, port):
-                all_passed = False
+        if test_404 and not test_404_error(protocol, host, port):
+            all_passed = False
         
         print()
     
