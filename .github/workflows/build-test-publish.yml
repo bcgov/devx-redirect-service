@@ -59,18 +59,10 @@ jobs:
           done
           echo "Container did not become healthy in time." && docker logs redirect-container && exit 1
       
-      - name: Setup Python environment
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 #v6.2.0
-        with:
-          python-version: '3.x'
-
       - name: Run tests
         run: |
-          cd ./scripts
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
-          python test-redirects.py
+          chmod +x ./scripts/test-redirects.sh
+          ./scripts/test-redirects.sh
       
       - name: Stop container
         if: always()
