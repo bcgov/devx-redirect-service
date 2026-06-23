@@ -5,6 +5,3 @@ LICENSE
 *.md
 scripts/
 .github/
-venv/
-.venv/
-__pycache__/
