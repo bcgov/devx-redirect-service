@@ -103,13 +103,21 @@ def check_url_allowed(url: str) -> bool:
     """
 
     port = urlparse(url).port
-    if port is not None and port not in allowed_ports:
-        print(f"❌ Port {port} is not allowed")
+    if not check_port_allowed(port):
         return False
 
     hostname = urlparse(url).hostname
+    return check_hostname_allowed(hostname)
+
+def check_port_allowed(port: int | None) -> bool:
+    if port is not None and port not in allowed_ports:
+        print(f"❌ Port {port} is not allowed")
+        return False
+    return True
+
+def check_hostname_allowed(hostname: str | None) -> bool:
     if hostname is None:
-        print(f"❌ Invalid URL: {url}")
+        print(f"❌ Invalid hostname: {hostname}")
         return False
     
     # localhost case will match exactly
@@ -220,15 +228,21 @@ Examples:
         help=f'Optional port override for {local_host} testing. If not specified, will test all ports from test-cases.yaml. Ignored if including a hostname other than {local_host}.'
     )
     
-    
     args = parser.parse_args()
 
-    if args.host != local_host and args.port is not None:
-        print(f"❌ Port override is not allowed for host '{args.host}'.")
+    if not check_hostname_allowed(args.host):
+        print("❌ Host is not allowed.")
         sys.exit(1)
-    
+
+    if not check_port_allowed(args.port):
+        print("❌ Port is not allowed.")
+        sys.exit(1)
+
+    if args.host != local_host and args.port is not None:
+        print(f"❌ Port override is not allowed when testing a hostname other than {local_host}.")
+        sys.exit(1)
+
     protocol = 'http' if args.host == local_host else 'https'
-    
     script_dir = Path(__file__).parent
     yaml_file = script_dir / "test-cases.yaml"
     
