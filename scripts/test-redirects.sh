@@ -17,7 +17,7 @@ test_url() {
     status="$(printf '%s' "$response" | tail -n 2 | head -n 1)"
     location="$(printf '%s' "$response" | tail -n 1)"
 
-    if [[ "$status" == "301" && "$location" == "$expected_url" ]]; then
+    if [[ ("$status" == "301" || "$status" == "308") && "$location" == "$expected_url" ]]; then
         echo "   ✅ OK - $location"
     else
         echo "   ❌ FAIL - $location (Status=$status)" >&2

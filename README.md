@@ -13,7 +13,7 @@ The project uses:
 
 ## Testing
 
-The `test-redirects.py` script tests a subset of redirects and the error page.
+The `test-redirects.sh` script tests a subset of redirects and the error page.
 
 It tests against localhost.
 

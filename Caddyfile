@@ -1754,7 +1754,7 @@
 # Just Ask Redirect
 :2019 {
 	import common_config
-	redir * https://developer.gov.bc.ca/docs/default/component/bc-developer-guide/use-github-in-bcgov/bc-government-organizations-in-github/#single-sign-on permanent	
+	redir * https://developer.gov.bc.ca/docs/default/component/bc-developer-guide/use-github-in-bcgov/bc-government-organizations-in-github/#single-sign-on permanent
 }
 
 # Health check endpoint
