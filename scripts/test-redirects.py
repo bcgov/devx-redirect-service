@@ -12,7 +12,6 @@ from typing import Dict, List, Any
 
 import yaml
 import requests
-from urllib.parse import urlparse
 
 local_host = "localhost"
 allowed_hosts = {local_host, 'developer.gov.bc.ca'}
@@ -53,19 +52,17 @@ def test_redirect(protocol: str, host: str, port: int | None, path: str, expecte
     print(f"   ↳ Expect: {expected_url}")
     
     try:
-        if check_url_allowed(url):
-            response = requests.head(url, allow_redirects=False, timeout=5)
-            status = response.status_code
-            location = response.headers.get('Location', '')
-            
-            if status == 301 and location == expected_url:
-                print("   ✅ OK")
-                return True
-            else:
-                print(f"   ❌ FAIL: Status={status}, Location={location}")
-                return False
+        response = requests.head(url, allow_redirects=False, timeout=5)
+        status = response.status_code
+        location = response.headers.get('Location', '')
+        
+        if status == 301 and location == expected_url:
+            print("   ✅ OK")
+            return True
         else:
+            print(f"   ❌ FAIL: Status={status}, Location={location}")
             return False
+
     
     except requests.RequestException as e:
         print(f"   ❌ ERROR: {e}")
@@ -79,35 +76,19 @@ def test_404_error(protocol: str, host: str, port: int | None) -> bool:
     print("🔎 Testing error handling (/non-existent-path/)")
     
     try:
-        if check_url_allowed(url):
-            response = requests.head(url, allow_redirects=False, timeout=5)
-            status = response.status_code
-            
-            if status == 404:
-                print("   ✅ 404 handling OK")
-                return True
-            else:
-                print(f"   ❌ Expected 404 but got {status}")
-                return False
+        response = requests.head(url, allow_redirects=False, timeout=5)
+        status = response.status_code
+        
+        if status == 404:
+            print("   ✅ 404 handling OK")
+            return True
         else:
+            print(f"   ❌ Expected 404 but got {status}")
             return False
-    
+
     except requests.RequestException as e:
         print(f"   ❌ ERROR: {e}")
         return False
-
-def check_url_allowed(url: str) -> bool:
-    """Validate that the hostname and port are in the allowed lists.
-    
-    Fixes issue: https://sonarcloud.io/organizations/bcgov-sonarcloud/rules?open=pythonsecurity%3AS8703&rule_key=pythonsecurity%3AS8703
-    """
-
-    port = urlparse(url).port
-    if not check_port_allowed(port):
-        return False
-
-    hostname = urlparse(url).hostname
-    return check_hostname_allowed(hostname)
 
 def check_port_allowed(port: int | None) -> bool:
     if port is not None and port not in allowed_ports:
