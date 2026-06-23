@@ -14,239 +14,186 @@ import yaml
 import requests
 
 local_host = "localhost"
-allowed_hosts = {local_host, 'developer.gov.bc.ca'}
-allowed_ports = {2015, 2017, 2018, 2019}
-
 
 def load_test_cases(yaml_file: str) -> List[Dict[str, Any]]:
     """Load test cases from YAML file."""
     if not os.path.exists(yaml_file):
         print(f"❌ Test data file not found: {yaml_file}")
         sys.exit(1)
-    
+
     try:
-        with open(yaml_file, 'r') as f:
+        with open(yaml_file, "r") as f:
             config = yaml.safe_load(f)
     except yaml.YAMLError as e:
         print(f"❌ Error parsing YAML: {e}")
         sys.exit(1)
-    
-    return config.get('test_ports', [])
+
+    return config.get("test_services", [])
 
 
-def build_url(protocol: str, host: str, port: int | None, path: str) -> str:
-    """Build a URL from protocol, host, port, and path."""
-    if port:
-        return f"{protocol}://{host}:{port}{path}"
-    return f"{protocol}://{host}{path}"
+def build_url(port: int | None, path: str) -> str:
+    """Build a URL from port and path."""
+    return f"http://{local_host}:{port}{path}"
 
 
-def test_redirect(protocol: str, host: str, port: int | None, path: str, expected_url: str) -> bool:
+def test_redirect(port: int | None, path: str, expected_url: str) -> bool:
     """
     Test a single redirect.
     Returns True if the redirect matches expected URL, False otherwise.
     """
-    url = build_url(protocol, host, port, path)
-    
+    url = build_url(port, path)
+
     print(f"🔎 Testing {path}")
     print(f"   ↳ Expect: {expected_url}")
-    
+
     try:
         response = requests.head(url, allow_redirects=False, timeout=5)
         status = response.status_code
-        location = response.headers.get('Location', '')
-        
+        location = response.headers.get("Location", "")
+
         if status == 301 and location == expected_url:
             print("   ✅ OK")
             return True
-        else:
-            print(f"   ❌ FAIL: Status={status}, Location={location}")
-            return False
 
-    
+        print(f"   ❌ FAIL: Status={status}, Location={location}")
+        return False
+
     except requests.RequestException as e:
         print(f"   ❌ ERROR: {e}")
         return False
 
 
-def test_404_error(protocol: str, host: str, port: int | None) -> bool:
+def test_404_error(port: int | None) -> bool:
     """Test that non-existent path returns 404."""
-    url = build_url(protocol, host, port, '/non-existent-path/')
-    
+    url = build_url(port, "/non-existent-path/")
+
     print("🔎 Testing error handling (/non-existent-path/)")
-    
+
     try:
         response = requests.head(url, allow_redirects=False, timeout=5)
         status = response.status_code
-        
+
         if status == 404:
             print("   ✅ 404 handling OK")
             return True
-        else:
-            print(f"   ❌ Expected 404 but got {status}")
-            return False
+
+        print(f"   ❌ Expected 404 but got {status}")
+        return False
 
     except requests.RequestException as e:
         print(f"   ❌ ERROR: {e}")
         return False
 
-def check_port_allowed(port: int | None) -> bool:
-    if port is not None and port not in allowed_ports:
-        print(f"❌ Port {port} is not allowed")
-        return False
-    return True
 
-def check_hostname_allowed(hostname: str | None) -> bool:
-    if hostname is None:
-        print(f"❌ Invalid hostname: {hostname}")
-        return False
-    
-    # localhost case will match exactly
-    if hostname in allowed_hosts:
+def check_service_allowed(service: str, test_configs: List[Dict[str, Any]]) -> bool:
+    if any(cfg.get("service") == service for cfg in test_configs):
         return True
 
-    parts = hostname.split('.', 1)
-    if len(parts) < 2:
-        print(f"❌ Invalid hostname: {hostname}")
-        return False    
+    print(f"❌ Service '{service}' is not defined in test-cases.yaml")
+    return False
 
-    return parts[1] in allowed_hosts
 
-def run_tests(
-    protocol: str,
-    host: str,
-    configs_to_test: List[Dict[str, Any]],
-    port_override: int | None = None
-) -> bool:
+def get_test_configs(test_configs: List[Dict[str, Any]], service: str | None = None) -> List[Dict[str, Any]]:
+    if service is None:
+        return test_configs
+    return [cfg for cfg in test_configs if cfg.get("service") == service]
+
+
+def run_tests(configs_to_test: List[Dict[str, Any]]) -> bool:
     """
     Run tests for matching configurations.
-    
+
     Args:
-        protocol: HTTP protocol (http or https)
-        host: Target host (localhost for local dev, or domain for production)
-        configs_to_test: List of test configurations to run
-        port_override: Optional port override (for localhost testing)
+        configs_to_test: List of test configurations to run locally
     Returns:
         True if all tests passed, False if any test failed.
     """
-    all_passed = True        
-    
-    print(f"🚀 Starting redirect tests on {host}")
+    all_passed = True
+
+    print("🚀 Starting redirect tests in local")
     print()
-    
+
     for test_config in configs_to_test:
-        # Determine which endpoint to use
-        if host == local_host:
-            port = port_override or test_config.get('port')
-            endpoint_display = f"{host}:{port}"
-        else:
-            # Production: use hostname directly (HTTPS assumed)
-            port = None
-            endpoint_display = host
-        
-        test_404 = test_config.get('test_404', True)
-        cases = test_config.get('cases', [])
-        
-        print(f"🧪 Testing redirects on {endpoint_display}")
-        
-        for case in cases:
-            path = case['path']
-            expected = case['expected']
-            
-            if not test_redirect(protocol, host, port, path, expected):
-                all_passed = False
-        
-        # Test 404 if enabled
-        if test_404 and not test_404_error(protocol, host, port):
+        service = test_config.get("service")
+        port = test_config.get("port")
+
+        if not service:
+            print("❌ Test config is missing required field 'service'")
             all_passed = False
+            continue
         
+        if not port:
+            print(f"❌ Test config for service '{service}' is missing required field 'port'")
+            all_passed = False
+            continue
+        
+
+        test_404 = test_config.get("test_404", True)
+        cases = test_config.get("cases", [])
+
+        print(f"🧪 Testing {service} redirects on {local_host}:{port}")
+
+        for case in cases:
+            path = case["path"]
+            expected = case["expected"]
+
+            if not test_redirect(port, path, expected):
+                all_passed = False
+
+        if test_404 and not test_404_error(port):
+            all_passed = False
+
         print()
-    
+
     return all_passed
 
-def get_test_configs_for_host(test_configs, host, port_override=None):
-    # Filter configurations based on host and port. 
-    # Allows testing of specific ports for localhost, and specific hostnames for production.
-    configs_to_test = []
-    if host == local_host and port_override is None:
-        configs_to_test = test_configs
-    else:
-        filter_key, filter_value = (
-            ("port", port_override) if host == local_host else ("hostname", host)
-        )
-        configs_to_test = [
-                cfg for cfg in test_configs
-                if cfg.get(filter_key) == filter_value
-            ]
-    return configs_to_test
-    
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description='Test redirect service functionality',
+        description="Test redirect service functionality",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''
+        epilog="""
 Examples:
-  # Test locally (uses port from test-cases.yaml)
-  %(prog)s --host localhost
-  
-  # Test production hostname
-  %(prog)s --host docs.developer.gov.bc.ca
-  
-  # Test specific local port
-  %(prog)s --host localhost --port 2015
-    '''
+  # Test all services locally
+    %(prog)s
+
+    # Test a single local service
+    %(prog)s --service docs
+    """,
     )
     parser.add_argument(
-        '--host',
-        default=local_host,
-        help=f'Host to test. Use "{local_host}" for local dev, or domain for production (default: {local_host})'
-    )
-    parser.add_argument(
-        '--port',
-        type=int,
+        "--service",
         default=None,
-        help=f'Optional port override for {local_host} testing. If not specified, will test all ports from test-cases.yaml. Ignored if including a hostname other than {local_host}.'
+        help="Optional service name filter from test-cases.yaml (for example: docs, stackoverflow, rocketchat, just-ask)",
     )
-    
+
     args = parser.parse_args()
 
-    if not check_hostname_allowed(args.host):
-        print("❌ Host is not allowed.")
-        sys.exit(1)
-
-    if not check_port_allowed(args.port):
-        print("❌ Port is not allowed.")
-        sys.exit(1)
-
-    if args.host != local_host and args.port is not None:
-        print(f"❌ Port override is not allowed when testing a hostname other than {local_host}.")
-        sys.exit(1)
-
-    protocol = 'http' if args.host == local_host else 'https'
     script_dir = Path(__file__).parent
     yaml_file = script_dir / "test-cases.yaml"
-    
-    # Load test cases
+
     test_configs = load_test_cases(str(yaml_file))
 
-    configs_to_test = get_test_configs_for_host(test_configs, args.host, args.port)
+    if args.service and not check_service_allowed(args.service, test_configs):
+        sys.exit(1)
+
+    configs_to_test = get_test_configs(test_configs, args.service)
 
     if not configs_to_test:
-        print(f"❌ No test configurations found for host '{args.host}'" + (f" and port '{args.port}'" if args.port else ""))
+        print("❌ No test configurations found" + (f" for service '{args.service}'" if args.service else ""))
         sys.exit(1)
 
-    print(f"Configuration: {protocol}://{args.host}" + (f":{args.port}" if args.port else ""))
+    print("Configuration:" + (f", service={args.service}" if args.service else ", service=all"))
     print()
-    
-    # Run tests
-    if run_tests(protocol, args.host, configs_to_test, port_override=args.port):
+
+    if run_tests(configs_to_test):
         print("🎉 All tests passed successfully!")
         sys.exit(0)
-    else:
-        print("❌ Some tests failed!")
-        sys.exit(1)
+
+    print("❌ Some tests failed!")
+    sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

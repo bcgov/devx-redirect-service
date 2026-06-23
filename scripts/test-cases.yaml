@@ -1,6 +1,6 @@
-test_ports:
-  - port: 2015
-    hostname: docs.developer.gov.bc.ca
+test_services:
+  - service: docs
+    port: 2015
     test_404: true
     cases:
       - path: /
@@ -12,8 +12,8 @@ test_ports:
       - path: /platform-security-tools/
         expected: "https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/docs/security-and-privacy-compliance/platform-security-tools/"
 
-  - port: 2017
-    hostname: stackoverflow.developer.gov.bc.ca
+  - service: stackoverflow
+    port: 2017
     test_404: true
     cases:
       - path: /
@@ -27,8 +27,8 @@ test_ports:
       - path: /a/121
         expected: "https://github.com/bcgov/bcgov-community-discussions/discussions/21#discussioncomment-14942197"
 
-  - port: 2018
-    hostname: rocketchat.developer.gov.bc.ca
+  - service: rocketchat
+    port: 2018
     test_404: false
     cases:
       - path: /
@@ -36,8 +36,8 @@ test_ports:
       - path: /some/path?test=1
         expected: "https://bcgov.sharepoint.com/teams/developercommunity"
 
-  - port: 2019
-    hostname: just-ask.developer.gov.bc.ca
+  - service: just-ask
+    port: 2019
     test_404: false
     cases:
       - path: /
