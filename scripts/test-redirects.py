@@ -15,8 +15,8 @@ import requests
 from urllib.parse import urlparse
 
 local_host = "localhost"
-allowed_hosts = {local_host}  # Always allow localhost
-allowed_ports = set() 
+allowed_hosts = {local_host, 'developer.gov.bc.ca'}
+allowed_ports = {2015, 2017, 2018, 2019}
 
 
 def load_test_cases(yaml_file: str) -> List[Dict[str, Any]]:
@@ -53,7 +53,7 @@ def test_redirect(protocol: str, host: str, port: int | None, path: str, expecte
     print(f"   ↳ Expect: {expected_url}")
     
     try:
-        if check_host_allowed(url):
+        if check_url_allowed(url):
             response = requests.head(url, allow_redirects=False, timeout=5)
             status = response.status_code
             location = response.headers.get('Location', '')
@@ -79,7 +79,7 @@ def test_404_error(protocol: str, host: str, port: int | None) -> bool:
     print("🔎 Testing error handling (/non-existent-path/)")
     
     try:
-        if check_host_allowed(url):
+        if check_url_allowed(url):
             response = requests.head(url, allow_redirects=False, timeout=5)
             status = response.status_code
             
@@ -96,16 +96,32 @@ def test_404_error(protocol: str, host: str, port: int | None) -> bool:
         print(f"   ❌ ERROR: {e}")
         return False
 
-def check_host_allowed(url: str) -> bool:
-    """Validate that a hostname is in the allowed hosts list.
+def check_url_allowed(url: str) -> bool:
+    """Validate that the hostname and port are in the allowed lists.
     
     Fixes issue: https://sonarcloud.io/organizations/bcgov-sonarcloud/rules?open=pythonsecurity%3AS8703&rule_key=pythonsecurity%3AS8703
     """
-    if urlparse(url).hostname not in allowed_hosts or urlparse(url).port not in allowed_ports:
-        print(f"❌ Host '{urlparse(url).hostname}' or port '{urlparse(url).port}' is not allowed.")
+
+    port = urlparse(url).port
+    if port is not None and port not in allowed_ports:
+        print(f"❌ Port {port} is not allowed")
         return False
-    else:
+
+    hostname = urlparse(url).hostname
+    if hostname is None:
+        print(f"❌ Invalid URL: {url}")
+        return False
+    
+    # localhost case will match exactly
+    if hostname in allowed_hosts:
         return True
+
+    parts = hostname.split('.', 1)
+    if len(parts) < 2:
+        print(f"❌ Invalid hostname: {hostname}")
+        return False    
+
+    return parts[1] in allowed_hosts
 
 def run_tests(
     protocol: str,
@@ -219,15 +235,6 @@ Examples:
     
     # Load test cases
     test_configs = load_test_cases(str(yaml_file))
-
-    allowed_hosts.update(
-        str(cfg['hostname']) for cfg in test_configs if isinstance(cfg.get('hostname'), str)
-    )
-    allowed_ports.update(
-        int(cfg['port']) for cfg in test_configs if isinstance(cfg.get('port'), int)
-    )
-    allowed_ports.add(None)  # Allow URLs without explicit ports
-
 
     configs_to_test = get_test_configs_for_host(test_configs, args.host, args.port)
 

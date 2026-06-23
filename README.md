@@ -15,6 +15,8 @@ The project uses:
 
 The `test-redirects.sh` script tests a subset of redirects and the error page.
 
+It can test both local and production locations.
+
 You can run it locally using Docker or Podman.
 
 ```bash
