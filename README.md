@@ -15,24 +15,29 @@ The project uses:
 
 The `test-redirects.sh` script tests a subset of redirects and the error page.
 
+It tests against localhost.
+
 You can run it locally using Docker or Podman.
 
 ```bash
 # Podman build and run commands
 podman build -t devx-redirect-service .
-podman run --rm -p 2015:2015 -p 2016:2016 -p 2017:2017 -p 2018:2018 devx-redirect-service
+podman run --rm -p 2015:2015 -p 2016:2016 -p 2017:2017 -p 2018:2018 -p 2019:2019 devx-redirect-service
 ```
 
 ```bash
 # Docker build and run commands
 docker build -t devx-redirect-service .
-docker run --rm -p 2015:2015 -p 2016:2016 -p 2017:2017 -p 2018:2018 devx-redirect-service
+docker run --rm -p 2015:2015 -p 2016:2016 -p 2017:2017 -p 2018:2018 -p 2019:2019 devx-redirect-service
 ```
 
 ```bash
-# Run the automated tests
-./scripts/test-redirects.sh localhost 2015
+# Run all tests  
+./scripts/test-redirects.sh
+```
 
+
+```bash
 # Or test individual redirects manually
 curl -I http://localhost:2015/sysdig-monitor-onboarding/
 ```

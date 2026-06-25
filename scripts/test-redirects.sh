@@ -1,106 +1,66 @@
 #!/usr/bin/env bash
 # Test script for redirect functionality
-# Can be run locally or from CI/CD pipeline
 
 set -euo pipefail
 
-HOST=${1:-localhost}
-PORT1=${2:-2015}
-PORT2=${3:-2017}
-PORT3=${4:-2018}
+DOCS_URL="http://localhost:2015"
+SO_URL="http://localhost:2017"
+RC_URL="http://localhost:2018"
+JA_URL="http://localhost:2019"
 
-paths_port1=(
-  "/"
-  "/sysdig-monitor-onboarding/"
-  "/rocketchat-etiquette/"
-  "/platform-security-tools/"
-)
+test_url() {
+    local url_to_test="$1"
+    local expected_url="$2"
+    local response status location
+    
+    response=$(curl -sS -o /dev/null --connect-timeout 5 --max-time 15 -w "%{http_code}\n%{redirect_url}\n" "$url_to_test")
+    status="$(printf '%s' "$response" | tail -n 2 | head -n 1)"
+    location="$(printf '%s' "$response" | tail -n 1)"
 
-expected_destinations_port1=(
-  "https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/"
-  "https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/docs/app-monitoring/sysdig-monitor-onboarding/"
-  "https://developer.gov.bc.ca/docs/default/component/bc-developer-guide/rocketchat/rocketchat-etiquette/"
-  "https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/docs/security-and-privacy-compliance/platform-security-tools/"
-)
-
-paths_port2=(
-  "/"
-  "/questions"
-  "/questions/94/117"
-  "/q/100"
-  "/a/121"
-)
-
-expected_destinations_port2=(
-  "https://github.com/bcgov/bcgov-community-discussions/discussions"
-  "https://github.com/bcgov/bcgov-community-discussions/discussions"
-  "https://github.com/bcgov/bcgov-community-discussions/discussions/16#discussioncomment-14942167"
-  "https://github.com/bcgov/bcgov-community-discussions/discussions/18"
-  "https://github.com/bcgov/bcgov-community-discussions/discussions/21#discussioncomment-14942197"
-)
-
-paths_port3=(
-  "/"
-  "/some/path?test=1"
-)
-
-expected_destinations_port3=(
-  "https://bcgov.sharepoint.com/teams/developercommunity"
-  "https://bcgov.sharepoint.com/teams/developercommunity"
-)
-
-
-run_tests() {
-  local paths_array_name="$1"
-  local expected_array_name="$2"
-  local port="$3"
-  local test_404="${4:-true}"
-
-  local length
-  eval "length=\${#${paths_array_name}[@]}"
-
-  for ((i=0; i<length; i++)); do
-    eval "path=\${${paths_array_name}[i]}"
-    eval "expected=\${${expected_array_name}[i]}"
-
-    echo "🔎 Testing $path"
-    echo "   ↳ Expect: $expected"
-
-    response=$(curl -s -w "%{http_code}\n%{redirect_url}\n" "http://$HOST:$port$path")
-    status=$(echo "$response" | head -1)
-    location=$(echo "$response" | tail -1)
-
-    if [[ "$status" == "301" && "$location" == "$expected" ]]; then
-      echo "   ✅ OK"
+    if [[ ("$status" == "301" || "$status" == "308") && "$location" == "$expected_url" ]]; then
+        echo "   ✅ OK - $location"
     else
-      echo "   ❌ FAIL: Status=$status, Location=$location"
-      exit 1
+        echo "   ❌ FAIL - $location (Status=$status)" >&2
+        exit 1
     fi
-  done
+}
 
-  if [[ "$test_404" == "true" ]]; then
-    # 404 test
-    echo "🔎 Testing error handling (/non-existent-path/)"
-    response=$(curl -s -o /dev/null -w "%{http_code}\n" "http://$HOST:$port/non-existent-path/")
+check_error_response() {
+    local url_to_test="$1" response status
+    response=$(curl -sS -o /dev/null --connect-timeout 5 --max-time 15 -w "%{http_code}\n" "${url_to_test%/}/non-existent-path/")
     status="$response"
 
     if [[ "$status" == "404" ]]; then
       echo "   ✅ 404 handling OK"
     else
-      echo "   ❌ Expected 404 but got $status"
+      echo "   ❌ Expected 404 but got $status" >&2
       exit 1
     fi
-  fi
 }
 
+echo "Testing $DOCS_URL redirects"
+test_url "$DOCS_URL/" "https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/"
+test_url "$DOCS_URL/sysdig-monitor-onboarding/" "https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/docs/app-monitoring/sysdig-monitor-onboarding/"
+test_url "$DOCS_URL/rocketchat-etiquette/" "https://developer.gov.bc.ca/docs/default/component/bc-developer-guide/rocketchat/rocketchat-etiquette/"
+test_url "$DOCS_URL/platform-security-tools/" "https://developer.gov.bc.ca/docs/default/component/platform-developer-docs/docs/security-and-privacy-compliance/platform-security-tools/"
 
-echo "🧪 Testing redirects on $HOST:$PORT1"
-run_tests paths_port1 expected_destinations_port1 "$PORT1"
+echo "Testing $DOCS_URL 404 handling"
+check_error_response "$DOCS_URL"
 
-echo "🧪 Testing redirects on $HOST:$PORT2"
-run_tests paths_port2 expected_destinations_port2 "$PORT2"
+echo "Testing $SO_URL redirects"
+test_url "$SO_URL/" "https://github.com/bcgov/bcgov-community-discussions/discussions"
+test_url "$SO_URL/questions" "https://github.com/bcgov/bcgov-community-discussions/discussions"
+test_url "$SO_URL/questions/94/117" "https://github.com/bcgov/bcgov-community-discussions/discussions/16#discussioncomment-14942167"
+test_url "$SO_URL/q/100" "https://github.com/bcgov/bcgov-community-discussions/discussions/18"
+test_url "$SO_URL/a/121" "https://github.com/bcgov/bcgov-community-discussions/discussions/21#discussioncomment-14942197"
 
-echo "🧪 Testing redirects on $HOST:$PORT3"
-run_tests paths_port3 expected_destinations_port3 "$PORT3" false
+echo "Testing $SO_URL 404 handling"
+check_error_response "$SO_URL"
 
-echo "🎉 All tests passed successfully!"
+echo "Testing $RC_URL redirects"
+test_url "$RC_URL/" "https://bcgov.sharepoint.com/teams/developercommunity"
+test_url "$RC_URL/some/path?test=1" "https://bcgov.sharepoint.com/teams/developercommunity"
+
+echo "Testing $JA_URL redirects"
+test_url "$JA_URL/" "https://developer.gov.bc.ca/docs/default/component/bc-developer-guide/use-github-in-bcgov/bc-government-organizations-in-github/#single-sign-on"
+test_url "$JA_URL/some/other/path?foo=bar" "https://developer.gov.bc.ca/docs/default/component/bc-developer-guide/use-github-in-bcgov/bc-government-organizations-in-github/#single-sign-on"
